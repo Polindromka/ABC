@@ -2,14 +2,14 @@
 ; Compile with: nasm -f elf time.asm
 ; Link with (64 bit systems require elf_i386 option): ld -m elf_i386 time.o -o time
 ; Run with: ./time
+ format ELF executable 3
+include        'functions.asm'
  
-%include        'functions.asm'
- 
-SECTION .data
+segment readable writeable
 msg        db      'Seconds since Jan 01 1970: ', 0h     ; a message string
  
-SECTION .text
-global  _start
+segment readable executable
+entry  _start
  
 _start:
  
