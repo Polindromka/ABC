@@ -9,7 +9,7 @@ include        'functions.asm'
 segment readable writeable
 
 FileName db 'readmeNew.txt', 0h    ; the filename to create
-String db 'Hello world!', 0h  ; the contents to write
+String db 'Hello, world!', 0h  ; the contents to write
  
 segment readable executable
 entry  _start
