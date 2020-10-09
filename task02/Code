@@ -1,0 +1,211 @@
+;Êóëåøîâà Ïîëèíà ÁÏÈ197
+;Âàðèàíò 13
+;Ìàññèâ B èç ýëåìåíòîâ À, çà èñêëþ÷åíèåì ýëåìåíòîâ, çíà÷åíèÿ êîòîðûõ ñîâïàäàþò ñ ìèíèìàëüíûì ýëåìåíòîì A
+;Â èñõîäíîì êîäå ïðè îøèáêå âûâîäèò àäðåñ, à íå çíà÷åíèå íåêîððåêòíîãî ðàçìåðà
+
+
+format PE console
+entry start
+
+include 'win32a.inc'
+
+section '.data' data readable writable
+
+        strVecSize   db 'size of vector? ', 0
+        strNewVec    db 'Vector B:', 10, 0
+        strIncorSize db 'Incorrect size of vector = %d', 10, 0
+        strVecElemI  db '[%d]? ', 0
+        strScanInt   db '%d', 0
+        strMinValue  db 'MinCount = %d Min = %d', 10, 0
+        strVecElemOut  db '[%d] = %d', 10, 0
+
+        vec_size     dd 0
+        new_vec_size dd 0
+        min          dd ?
+        i            dd ?
+        tmp          dd ?
+        mincnt       dd 0
+        vec          rd 100
+        new_vec      rd 100
+
+
+section '.code' code readable executable
+
+start:
+; 1) vector input
+        push strVecSize
+        call [printf]
+        push vec_size
+        push strScanInt
+        call [scanf]
+        mov eax, [vec_size]
+        cmp eax, 100
+        jg failSize
+        mov eax, [vec_size]
+        cmp eax, 0
+        jg  getVector
+failSize:
+        push [vec_size]
+        push strIncorSize
+        call [printf]
+        jmp finish
+; continue...
+getVector:
+        xor ecx, ecx            ; ecx = 0
+        mov ebx, vec            ; ebx = &vec
+getVecLoop:
+        mov [tmp], ebx
+        cmp ecx, [vec_size]
+        jge endInputVector       ; to end of loop
+
+        ; input element
+        mov [i], ecx
+        push ecx
+        push strVecElemI
+        call [printf]
+
+        push ebx
+        push strScanInt
+        call [scanf]
+
+        mov ecx, [i]
+        inc ecx
+        mov ebx, [tmp]
+        add ebx, 4
+        jmp getVecLoop
+endInputVector:
+
+; 2) get vector min
+minVector:
+        xor ecx, ecx            ; ecx = 0
+        mov ebx, vec   ; ebx = &vec
+        mov edx, [ebx]
+        mov [min],edx
+        xor edi, edi
+minVecLoop:
+        cmp ecx, [vec_size]
+        je endMinVector      ; to end of loop
+        mov edx, [ebx]
+        cmp [min], edx
+        jle less
+        mov [min], edx
+        xor edi, edi
+less:
+        cmp [min], edx
+        jne counter
+        inc edi
+counter:
+        inc ecx
+        add ebx, 4
+        jmp minVecLoop
+endMinVector:
+
+; 3) out of min
+         mov [mincnt], edi
+         push [min]
+         push [mincnt]
+         push strMinValue
+         call [printf]
+
+; 4) vector out
+putVector:
+        xor ecx, ecx            ; ecx = 0
+        mov ebx, vec            ; ebx = &vec
+putVecLoop:
+        mov [tmp], ebx
+        cmp ecx, [vec_size]
+        je endOutputVector      ; to end of loop
+        mov [i], ecx
+
+        ; output element
+        push dword [ebx]
+        push ecx
+        push strVecElemOut
+        call [printf]
+
+        mov ecx, [i]
+        inc ecx
+        mov ebx, [tmp]
+        add ebx, 4
+        jmp putVecLoop
+endOutputVector:
+
+; 5) make new vector
+newVector:
+        mov ecx, [vec_size]
+        mov eax, [mincnt]
+        sub ecx, eax
+        mov [new_vec_size], ecx
+
+getNewVector:
+        xor ecx, ecx            ; ecx = 0
+        mov ebx, vec            ; ebx = &vec
+        mov edi, new_vec
+getNewVecLoop:
+        mov [tmp], ebx
+        cmp ecx, [vec_size]
+        jge endInputNewVector       ; to end of loop
+        mov edx, [ebx]
+        cmp edx, [min]
+        je equal
+        mov [edi], edx
+        add edi, 4
+equal:
+        inc ecx
+        mov ebx, [tmp]
+        add ebx, 4
+        jmp getNewVecLoop
+endInputNewVector:
+
+; 6) output new vector
+putNewVector:
+        push strNewVec
+        call [printf]
+        xor ecx, ecx            ; ecx = 0
+        mov ebx, new_vec            ; ebx = &vec
+putNewVecLoop:
+        mov [tmp], ebx
+        cmp ecx, [new_vec_size]
+        je endOutputNewVector      ; to end of loop
+        mov [i], ecx
+
+        ; output element
+        push dword [ebx]
+        push ecx
+        push strVecElemOut
+        call [printf]
+
+        mov ecx, [i]
+        inc ecx
+        mov ebx, [tmp]
+        add ebx, 4
+        jmp putNewVecLoop
+endOutputNewVector:
+
+finish:
+                call [getch]
+
+                push 0
+                call [ExitProcess]
+
+
+                                
+
+;-------------------------------third act - including HeapApi--------------------------
+                                                 
+section '.idata' import data readable
+    library kernel, 'kernel32.dll',\
+            msvcrt, 'msvcrt.dll',\
+            user32,'USER32.DLL'
+
+include 'api\user32.inc'
+include 'api\kernel32.inc'
+    import kernel,\
+           ExitProcess, 'ExitProcess',\
+           HeapCreate,'HeapCreate',\
+           HeapAlloc,'HeapAlloc'
+  include 'api\kernel32.inc'
+    import msvcrt,\
+           printf, 'printf',\
+           scanf, 'scanf',\
+           getch, '_getch'
