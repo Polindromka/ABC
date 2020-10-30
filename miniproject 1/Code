@@ -77,7 +77,7 @@ section '.data' data readable writable
   sum dq 1.0 ;teylor series sum
   sumPrevious dq 0.0 ;teylor series sum
   sumPreviousPrevious dq 0.0 ;teylor series sum
-  error dq 0.0 ;teylor series sum
+  error dq 0.0 ;error
   errorStr db 'error=%.30lf',10,0 ;error
   previousStr db 'previous-previus sum=%.30lf',10,0 ;previous-previus sum
   exceptionr db 'exception',10,0 ;previous-previus sum
