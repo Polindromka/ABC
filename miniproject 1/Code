@@ -1,3 +1,7 @@
+;Êóëåøîâà Ïîëèíà ÁÏÈ197
+;Âàðèàíò 12
+;Ðàçðàáîòàòü ïðîãðàììó, âû÷èñëÿþùóþ ñ  ïîìîùüþ ñòåïåííîãî ðÿäà ñ òî÷íîñòüþ
+;íå  õóæå 0,1% çíà÷åíèå ôóíêöèè 1/e^õ   äëÿ  çàäàííîãî ïàðàìåòðà x (èñïîëüçîâàòü FPU)
 
 
 format PE console
@@ -14,6 +18,16 @@ start:
     invoke scanf,  istr, x ;input x
 
   FINIT
+
+  fld qword[x]
+  fcom  qword[right] ;check is x more than 10
+  fstsw ax ;saves the current value of the SR register
+  sahf ;copy the contents of the AH register into the lower 8 bits of the flags register
+  ja exception
+  fcomp  qword[left] ;check is x less than -10
+  fstsw ax ;saves the current value of the SR register
+  sahf ;copy the contents of the AH register into the lower 8 bits of the flags register
+  jb exception
 ;teylor series
 taylor:
 
@@ -61,10 +75,16 @@ taylor:
   invoke printf, ostr, dword[sum], dword[sum+4]
   invoke printf, errorStr, dword[error], dword[error+4]
   invoke printf, previousStr, dword[sumPreviousPrevious], dword[sumPreviousPrevious+4]
+  jmp exit
+ exception:
+    invoke printf, exceptionr ;if x out of range
+ exit:
     ret
 
 
 section '.data' data readable writable
+  left dq -10.0 ;lower limit of range
+  right dq 10.0 ;upper limit of range
   a dq -1.0    ;sign
   x dq 0.0   ;value
   lastx dq 1.0  ; previous x power
@@ -77,10 +97,10 @@ section '.data' data readable writable
   sum dq 1.0 ;teylor series sum
   sumPrevious dq 0.0 ;teylor series sum
   sumPreviousPrevious dq 0.0 ;teylor series sum
-  error dq 0.0 ;error
+  error dq 0.0 ;teylor series sum
   errorStr db 'error=%.30lf',10,0 ;error
   previousStr db 'previous-previus sum=%.30lf',10,0 ;previous-previus sum
-  exceptionr db 'exception',10,0 ;previous-previus sum
+  exceptionr db 'exception. x should be between -10 and 10',10,0 ;previous-previus sum
 
 section '.idata' import data readable
     library kernel, 'kernel32.dll',\
